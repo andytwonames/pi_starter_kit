@@ -1,7 +1,7 @@
 # 06_reactions.py
 
 import RPi.GPIO as GPIO
-import time, random
+import time, random, math
 
 GPIO.setmode(GPIO.BCM)
 red_pin = 18
@@ -23,8 +23,8 @@ def red():
     GPIO.output(red_pin, True)
 
 def off():
-    GPIO.output(green_pin, False)
-    GPIO.output(red_pin, False)
+    GPIO.output(green_pin, True)
+    GPIO.output(red_pin, True)
 
 def key_pressed():
     if GPIO.input(red_switch_pin) and GPIO.input(green_switch_pin):
@@ -36,11 +36,16 @@ def key_pressed():
     if GPIO.input(red_switch_pin) and not GPIO.input(green_switch_pin):
         return 2
 
+n = 0
+sum = 0
+sumsq = 0
+bad = 0
+
 try:        
-    while True:
+    while n < 10:
         off()
         print("Press the button for red or green when one lights")
-        delay = random.randint(3, 7)
+        delay = random.randint(2, 5)
         color = random.randint(1, 2)
         time.sleep(delay)
         if (color == 2):
@@ -50,11 +55,22 @@ try:
         t1 = time.time()
         while not key_pressed():
             pass
-        t2 = time.time()
+
         if key_pressed() != color :
+            bad += 1
             print("WRONG BUTTON")
         else:
-            print("Time: " + str(int((t2 - t1) * 1000)) + " milliseconds")
-finally:  
+            t2 = time.time()
+            diff = int((t2 - t1) * 1000)
+            n += 1
+            sum += diff
+            sumsq += diff * diff
+            print("Time: " + str(diff) + " milliseconds")
+finally:
+    if n > 0:
+        avg = sum / n
+        print("Average = " + str(avg) + ", stddev = " + str(math.sqrt(sumsq / n - avg * avg)))
+    if bad > 0:
+        print("You have also pushed " + str(bad) + " wrong buttons out of " + str(bad + n))
     print("Cleaning up")
     GPIO.cleanup()
